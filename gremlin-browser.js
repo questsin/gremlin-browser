@@ -626,47 +626,83 @@ class Connection extends EventEmitter {
     this.emit('log', `ws open`);
 
     //nick
-    try {
-      this._ws = new WebSocket(this.url, {
-        headers: this.options.headers,
-        ca: this.options.ca,
-        cert: this.options.cert,
-        pfx: this.options.pfx,
-        rejectUnauthorized: this.options.rejectUnauthorized
-      });
-    } catch (error) {
-      this._ws = new WebSocket(this.url);
+    var options = {
+      headers: this.options.headers,
+      ca: this.options.ca,
+      cert: this.options.cert,
+      pfx: this.options.pfx,
+      rejectUnauthorized: this.options.rejectUnauthorized
     }
+    //console.log(options)
+    //this._ws = new WebSocket(this.url, options);
+    this._ws = new WebSocket(this.url);
 
-    this._ws.on('message', (data) => this._handleMessage(data));
-    this._ws.on('close', (code, message) => this._handleClose(code, message));
+    //nick
+    //this._ws.on('message', (data) => this._handleMessage(data));
+    var that = this; 
+    this._ws.onmessage = function incoming(data) {
+      if (data === 'pong') {
+        console.log('pong')
+        that.emit('log', 'ws pong received');
+        if (that._pongTimeout) {
+          clearTimeout(that._pongTimeout);
+          that._pongTimeout = null;
+        }
+      } 
+      if (data === 'ping') {
+        console.log('ping')
+        that.emit('log', 'ws ping received');
+        that._ws.pong();
+      } 
+      //console.log(data)
+      that._handleMessage(data)
+    };
 
-    this._ws.on('pong', () => {
-      this.emit('log', 'ws pong received');
-      if (this._pongTimeout) {
-        clearTimeout(this._pongTimeout);
-        this._pongTimeout = null;
-      }
-    });
-    this._ws.on('ping', () => {
-      this.emit('log', 'ws ping received');
-      this._ws.pong();
-    });
+
+   // this._ws.on('close', (code, message) => this._handleClose(code, message));
+    this._ws.onclose = function close() {
+      var code = null; 
+      var message = null;
+      that._handleClose(code, message)
+    };
+
+    //nick
+    // this._ws.on('pong', () => {
+    //   this.emit('log', 'ws pong received');
+    //   if (this._pongTimeout) {
+    //     clearTimeout(this._pongTimeout);
+    //     this._pongTimeout = null;
+    //   }
+    // });
+    // this._ws.on('ping', () => {
+    //   this.emit('log', 'ws ping received');
+    //   this._ws.pong();
+    // });
 
     return this._openPromise = new Promise((resolve, reject) => {
-      this._ws.on('open', () => {
+      // nick
+      // this._ws.on('open', () => {
+      //   this.isOpen = true;
+      //   if (this._pingEnabled) {
+      //     this._pingHeartbeat();
+      //   }
+      //   resolve();
+      // });
+      this._ws.onopen = function open() {
         this.isOpen = true;
         if (this._pingEnabled) {
           this._pingHeartbeat();
         }
         resolve();
-      });
-      this._ws.on('error', (err) => {
-        this._handleError(err);
-        reject(err);
-      });
+      };
+      //nick
+      // this._ws.on('error', (err) => {
+      //   this._handleError(err);
+      //   reject(err);
+      // });
     });
   }
+
 
   /** @override */
   submit(processor, op, args, requestId) {
@@ -756,8 +792,14 @@ class Connection extends EventEmitter {
     this.emit('close', code, message);
   }
 
-  _handleMessage(data) {
-    const response = this._reader.read(JSON.parse(data.toString()));
+  async _handleMessage(data) {
+    //nick
+    //console.log(data)
+    //window.data = data
+    //nick
+    //const response = this._reader.read(JSON.parse(data.toString()));
+    let _data = await data.data.text()
+    const response = this._reader.read(JSON.parse(_data.toString()));
     if (response.requestId === null || response.requestId === undefined) {
       // There was a serialization issue on the server that prevented the parsing of the request id
       // We invoke any of the pending handlers with an error
