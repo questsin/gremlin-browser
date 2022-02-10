@@ -1,5 +1,11 @@
 # gremlin-browser
-JavaScript Gremlin Language Variant for the Browser
+JavaScript Gremlin Language Variant for the Browser based on version gremlin-js v3.5.2 and isomorphic-ws v4.0.1
+
+* [gremlin-javascript for node](https://www.npmjs.com/package/gremlin)
+* [isomorphic-ws](https://www.npmjs.com/package/isomorphic-ws)
+
+Tested using 
+* [Azure Cosmos DB Gremlin API](https://docs.microsoft.com/en-us/azure/cosmos-db/graph/graph-introduction)
 
 ## JavaScript Gremlin Language Variant for the Browser
 Apache TinkerPop™ is a graph computing framework for both graph databases (OLTP) and graph analytic systems (OLAP). Gremlin is the graph traversal language of TinkerPop. It can be described as a functional, data-flow language that enables users to succinctly express complex traversals on (or queries of) their application's property graph.
